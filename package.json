@@ -1,0 +1,20 @@
+{
+  "name": "dila",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dila — Dila Scooters en Brommers & Dila Watersport",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "images": "node scripts/prepare-images.mjs"
+  },
+  "devDependencies": {
+    "sharp": "0.35.5",
+    "turbo": "2.11.8"
+  }
+}

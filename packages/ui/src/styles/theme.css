@@ -1,0 +1,110 @@
+/**
+ * Design tokens for both Dila sites.
+ *
+ * One shared base (ink/paper/surface greys, type scale, radii) plus a single
+ * per-shop accent. The accent is deliberately indirected through
+ * `--dila-accent` so the exact same component tree renders in scooter red or
+ * watersport blue depending on the `data-shop` attribute set on the page.
+ *
+ * Loaded by each app's `globals.css` straight after `@import "tailwindcss"`.
+ */
+
+@theme {
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* Neutrals */
+  --color-ink-950: #0b0b0d;
+  --color-ink-900: #14151a;
+  --color-ink-800: #1e2026;
+  --color-ink-700: #2f3239;
+  --color-ink-600: #4a4e57;
+  --color-ink-500: #6b707b;
+  --color-ink-400: #8f95a1;
+  --color-ink-300: #b9bec7;
+  --color-ink-200: #d7dae0;
+  --color-ink-100: #e9ebef;
+  --color-ink-50: #f5f6f8;
+
+  /* Surfaces */
+  --color-paper: #ffffff;
+  --color-surface: #f5f6f8;
+  --color-surface-alt: #eceef2;
+  --color-line: #e3e5ea;
+
+  /* Per-shop accent — resolved through CSS variables, see :root below. */
+  --color-accent: var(--dila-accent);
+  --color-accent-strong: var(--dila-accent-strong);
+  --color-accent-soft: var(--dila-accent-soft);
+  --color-accent-ink: var(--dila-accent-ink);
+  /*
+   * Tinted accent for accent-coloured *text on dark surfaces*. The base accent
+   * only reaches ~3.9:1 against the ink bands, which fails WCAG AA for body
+   * copy; these tints clear 7:1.
+   */
+  --color-accent-light: var(--dila-accent-light);
+
+  /* Maximum content width used by <Container />. */
+  --container-wide: 84rem;
+}
+
+/* Scooter shop: red, matching their white-and-red sign. */
+:root,
+[data-shop="scooters"] {
+  --dila-accent: #d81f26;
+  --dila-accent-strong: #a3151b;
+  --dila-accent-soft: #fdeef0;
+  --dila-accent-ink: #ffffff;
+  --dila-accent-light: #ff7a80;
+}
+
+/* Watersport shop: blue, matching their white-and-blue sign. */
+[data-shop="watersport"] {
+  --dila-accent: #0f5c9c;
+  --dila-accent-strong: #0a4474;
+  --dila-accent-soft: #eaf3fb;
+  --dila-accent-ink: #ffffff;
+  --dila-accent-light: #7cbde9;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Keeps anchor targets clear of the sticky header. */
+  scroll-padding-top: 5.5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--dila-accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--dila-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
