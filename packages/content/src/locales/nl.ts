@@ -95,7 +95,9 @@ export const nl: Dictionary = {
   footer: {
     tagline:
       "Scooters, brommers en motoren in Purmerend — met een eigen werkplaats voor onderhoud en reparatie.",
+
     rights: "Alle rechten voorbehouden.",
+    draftNotice: "-",
   },
 
   brandPage: {
