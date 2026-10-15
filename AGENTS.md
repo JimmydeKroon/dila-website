@@ -246,11 +246,22 @@ Brand links were checked, not guessed: KYMCO `kymco.nl`, Yamaha
   Self-Serve Subscription Agreement §2.2.1). But §2.2.1(a) forbids "sign up for
   the Services on behalf of a third party" — so the client should own the
   account, or the developer hosts it as their own project.
-- The site is **100% static-capable** (no API routes, no dynamic data), so a
-  static host works. A static export needs `output: "export"` **and**
-  `images: { unoptimized: true }` in `next.config.ts` — note that this trades
-  away Next's runtime image optimisation, so prefer a host that can run
-  `next build` normally if you have the choice.
+- **The site is a static export and already configured as one.**
+  `next.config.ts` sets `output: "export"` and `images: { unoptimized: true }`;
+  `pnpm build` writes `apps/scooters/out/`. There is no server build, so
+  **`next start` no longer works** — serve `out/` instead.
+- **Two traps in that export, both silent or confusing.** (a) Without
+  `images.unoptimized`, Next still rewrites every `next/image` src to
+  `/_next/image?url=...`; a static export ships no optimizer, so **every photo
+  404s while the pages themselves render fine** — the site looks broken with no
+  error. Verify with `grep -c '_next/image' out/index.html` (must be 0) and
+  confirm `out/_next/image` does not exist. (b) Route handlers need an explicit
+  `export const dynamic = "force-static"`, which `app/robots.ts` and
+  `app/sitemap.ts` both carry; a new route handler must too or `next build`
+  fails with `export const dynamic = "force-static" ... not configured on route`.
+- **The tradeoff accepted:** no runtime image optimisation. The pipeline in
+  `scripts/prepare-images.mjs` already emits sane sizes (66-255 KB, max 2000px),
+  so the export serves those as-is rather than generating AVIF/WebP per request.
 - **Monorepo hosts:** set the project root to `apps/scooters` **and** enable
   "include source files outside the root directory", or the build fails on the
   missing `packages/*`. No environment variables are required to build or run.
@@ -282,8 +293,10 @@ tasks and `pnpm typecheck` fails with `Unable to find package manager binary`.
   `~/Documents/freelance projects/Dila/images/{logo,shop}` — identical to
   `assets/` and deliberately kept outside the repo. Copy them into `assets/logo`
   and `assets/shop` if `pnpm images` ever has to run from a clean checkout.
-- **Deployment:** nothing is deployed and no host is chosen yet — see §7 before
-  picking a plan.
+- **Deployment:** host chosen (**Cloudflare Pages**, static export), not yet
+  deployed — creating the Pages project needs the developer's Cloudflare login,
+  which is the one step an agent cannot do. The exact build settings are in
+  `README.md` under "Deploying to Cloudflare Pages".
 
 ## 10. Next up
 

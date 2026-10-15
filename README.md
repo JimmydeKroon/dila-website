@@ -128,6 +128,62 @@ into an unreadable block.
 
 ## Deployment
 
-Intended for Vercel, one project per app, both rooted at the monorepo. Set the
-root directory to `apps/scooters` and point the domain at it. Nothing has been
-deployed yet.
+The site is a **static export**: `pnpm build` writes plain HTML/CSS/JS/images to
+`apps/scooters/out/`, with no Next server involved at runtime. That is what the
+chosen host serves, and it is why `next.config.ts` sets `output: "export"` and
+`images: { unoptimized: true }` — see the comment in that file, and AGENTS.md §7
+for why the host is Cloudflare rather than Vercel.
+
+**Do not run `next start`.** There is no server build any more; preview the
+export with any static file server:
+
+```bash
+pnpm build
+npx serve apps/scooters/out        # http://localhost:3000
+```
+
+### Deploying to Cloudflare Pages (first deploy)
+
+Dashboard → **Workers & Pages → Create → Pages → Connect to Git** → pick
+`JimmydeKroon/dila-website`, then set:
+
+| Field | Value |
+| --- | --- |
+| Production branch | `main` |
+| Framework preset | **None** — not "Next.js", which assumes SSR |
+| Root directory | `apps/scooters` |
+| Build command | `cd ../.. && pnpm install --frozen-lockfile && pnpm --filter @dila/scooters build` |
+| Build output directory | `out` |
+
+Leave the build system version on v2 (Node 22). It satisfies `engines.node`
+(`>=20.9.0`) and honours the `packageManager: pnpm@12.11.2` pin.
+
+Notes that matter:
+
+- The build command must not be a bare `pnpm build` — that is Turborepo and would
+  run every workspace task instead of just this app.
+- The **root directory is `apps/scooters` while the install runs from the repo
+  root**, because the shared `packages/*` are outside the app directory. This is
+  the monorepo trap: a host that only installs inside `apps/scooters` cannot
+  resolve `@dila/ui` or `@dila/content` and fails on the missing packages.
+- Every branch and pull request gets its own preview URL
+  (`<branch>.<project>.pages.dev`), and those URLs are public by default — which
+  is exactly what makes them usable as a client review link.
+- `pages.dev` and `workers.dev` are fine for a review link but Cloudflare's own
+  docs say they are not for business-critical production, so point the client's
+  real domain at the project for launch.
+
+### Publishing a new build
+
+Push to `main`; Pages rebuilds automatically. For a manual deploy without Git:
+
+```bash
+pnpm build
+npx wrangler pages deploy apps/scooters/out --project-name dila-website
+```
+
+`npx wrangler login` once, first. No environment variables are needed to build or
+deploy — there are no secrets in this project.
+
+> **Draft indexing.** `app/robots.ts` currently allows crawling. Flip `allow` to
+> `disallow` there if the review URL must stay out of search engines.
