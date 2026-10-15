@@ -17,6 +17,7 @@ build/
 # tooling scratch
 .preview/
 .vercel/
+.wrangler/
 .freebuff/
 dev-server.log
 dev-server.pid

@@ -25,7 +25,7 @@ static page.
 | Phase | State |
 | --- | --- |
 | Monorepo + shared design system | done |
-| **Scooters site (Phase 1)** | **done** — home + 5 brand pages, verified building |
+| **Scooters site (Phase 1)** | **done** — home + 5 brand pages; auto-rebuilds on Cloudflare on every push to `main` (see §7) |
 | Watersport site (Phase 2) | not started; config + blue theme already wired |
 | Parts marketplace | not started, needs a datastore |
 
@@ -85,6 +85,14 @@ in `packages/content/src/site.ts`. Same for UI strings: they go in
    clicking the header logo on a brand page dropped the visitor into the brands
    section. Next logs a `missing-data-scroll-behavior` warning in dev, so treat
    that warning as a real defect rather than noise.
+8. **`wrangler deploy` will try to convert this project to OpenNext SSR** unless
+   `apps/scooters/wrangler.jsonc` is present. With no Wrangler config, wrangler
+   runs *automatic configuration*, sees Next.js, and offers to migrate to
+   `@opennextjs/cloudflare` — wrong for a fully prerendered export, and its setup
+   step runs a plain `npm install`, which cannot parse this repo's `workspace:*`
+   dependencies. The build then dies with the misleading
+   `npm error Unsupported URL Type "workspace:": workspace:*` — nothing to do
+   with the actual site. That config file is load-bearing; keep it committed.
 
 ## 4. Design decisions and the reasoning
 
@@ -242,10 +250,16 @@ Brand links were checked, not guessed: KYMCO `kymco.nl`, Yamaha
   "a paid employee or consultant writing the code" and "advertising the sale of
   a product or service". A client business site therefore needs **Pro**.
   Preview URLs are also public on Hobby.
-- **Cloudflare Pages free has no commercial-use restriction** (verified in their
+- **Cloudflare free has no commercial-use restriction** (verified in their
   Self-Serve Subscription Agreement §2.2.1). But §2.2.1(a) forbids "sign up for
   the Services on behalf of a third party" — so the client should own the
   account, or the developer hosts it as their own project.
+- **It deploys as an asset-only Worker, driven by the GitHub integration.**
+  Cloudflare's "connect a repo" flow creates a *Workers Builds* pipeline, which
+  runs a build command and then a **deploy command** (`npx wrangler deploy`); a
+  Pages project has no deploy command at all. Both products are viable and cost
+  the same for this site, so the shape was chosen to match the integration that
+  already exists rather than to re-create it as Pages.
 - **The site is a static export and already configured as one.**
   `next.config.ts` sets `output: "export"` and `images: { unoptimized: true }`;
   `pnpm build` writes `apps/scooters/out/`. There is no server build, so
@@ -262,9 +276,20 @@ Brand links were checked, not guessed: KYMCO `kymco.nl`, Yamaha
 - **The tradeoff accepted:** no runtime image optimisation. The pipeline in
   `scripts/prepare-images.mjs` already emits sane sizes (66-255 KB, max 2000px),
   so the export serves those as-is rather than generating AVIF/WebP per request.
-- **Monorepo hosts:** set the project root to `apps/scooters` **and** enable
-  "include source files outside the root directory", or the build fails on the
-  missing `packages/*`. No environment variables are required to build or run.
+- **Deploy shape:** `apps/scooters/wrangler.jsonc` declares `name`,
+  `compatibility_date` and `assets.directory: "./out"` with **no `main`** — no
+  Worker script at all, so it is pure static hosting. Requests to static assets
+  are **free and unlimited with no daily request cap** on the free plan, because
+  nothing invokes a Worker script (verified: Cloudflare's "Billing and
+  Limitations" page for static assets). Free-tier 429s only apply to requests
+  that *do* hit a script — so do not add `main` or `run_worker_first` without
+  re-checking that. Confirmed locally: `wrangler deploy --dry-run` reads the
+  export and never runs automatic configuration.
+- **Monorepo root:** the host's project root is `apps/scooters` while the build
+  command starts with `cd ../..`, because the shared `packages/*` live outside
+  the app directory. A host that only installs inside `apps/scooters` cannot
+  resolve `@dila/ui` or `@dila/content` and fails on the missing packages.
+  No environment variables are required to build or run.
 
 ## 8. Commands
 
@@ -274,6 +299,8 @@ pnpm --filter @dila/scooters dev     # http://localhost:3000
 pnpm typecheck                       # tsc --noEmit, all packages
 pnpm build                           # production build
 pnpm images                          # regenerate derived images from assets/
+cd apps/scooters && npx wrangler dev      # serve out/ through the host's routing (8787)
+cd apps/scooters && npx wrangler deploy   # deploy by hand after npx wrangler login
 ```
 
 `corepack enable` used to be the first step. Node 26 **no longer ships
@@ -293,10 +320,12 @@ tasks and `pnpm typecheck` fails with `Unable to find package manager binary`.
   `~/Documents/freelance projects/Dila/images/{logo,shop}` — identical to
   `assets/` and deliberately kept outside the repo. Copy them into `assets/logo`
   and `assets/shop` if `pnpm images` ever has to run from a clean checkout.
-- **Deployment:** host chosen (**Cloudflare Pages**, static export), not yet
-  deployed — creating the Pages project needs the developer's Cloudflare login,
-  which is the one step an agent cannot do. The exact build settings are in
-  `README.md` under "Deploying to Cloudflare Pages".
+- **Deployment:** GitHub `main` → Cloudflare (Workers Builds), static export,
+  running as an asset-only Worker named `dila-website`. Pushing to `main` or
+  opening a PR rebuilds and redeploys automatically; branch and PR builds get
+  their own public preview URL. The dashboard fields and the manual deploy
+  command are in `README.md` under "How it deploys". The one thing an agent
+  cannot do is the Cloudflare login.
 
 ## 10. Next up
 

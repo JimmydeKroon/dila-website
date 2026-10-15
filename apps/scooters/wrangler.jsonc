@@ -1,0 +1,34 @@
+/**
+ * Cloudflare deploy config for the static export.
+ *
+ * WHY THIS FILE EXISTS (do not delete it): the GitHub integration deploys with
+ * `npx wrangler deploy`. When wrangler finds no config of its own, it runs
+ * "automatic configuration", notices Next.js, and offers to migrate the project
+ * to OpenNext — an SSR adapter, which is the wrong shape for a site that is
+ * 100% prerendered. That auto-config step then runs a plain `npm install` to add
+ * its own packages, which cannot parse this repo's `workspace:*` dependencies,
+ * so the build fails with:
+ *
+ *   npm error Unsupported URL Type "workspace:": workspace:*
+ *
+ * A committed wrangler config suppresses automatic configuration entirely, so
+ * `wrangler deploy` just uploads `out/`. Cloudflare's docs confirm that auto-
+ * configuration only runs when no wrangler config is present:
+ * https://developers.cloudflare.com/workers/framework-guides/automatic-configuration/
+ *
+ * There is deliberately no `main` here: this is an asset-only Worker, i.e. pure
+ * static hosting — the same result a Pages project would give, with no Worker
+ * script and no per-request Worker billing. See README → Deployment and
+ * AGENTS.md §7.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dila-website",
+  "compatibility_date": "2026-10-12",
+  "assets": {
+    // Relative to this file, so the deploy command must run from apps/scooters.
+    "directory": "./out",
+    // Next writes out/404.html; this makes Cloudflare serve it with a 404 status.
+    "not_found_handling": "404-page"
+  }
+}

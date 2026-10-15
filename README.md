@@ -134,56 +134,77 @@ chosen host serves, and it is why `next.config.ts` sets `output: "export"` and
 `images: { unoptimized: true }` — see the comment in that file, and AGENTS.md §7
 for why the host is Cloudflare rather than Vercel.
 
-**Do not run `next start`.** There is no server build any more; preview the
-export with any static file server:
+**Do not run `next start`.** There is no server build any more. Preview the
+export the same way the host serves it:
 
 ```bash
 pnpm build
-npx serve apps/scooters/out        # http://localhost:3000
+cd apps/scooters && npx wrangler dev   # http://localhost:8787
 ```
 
-### Deploying to Cloudflare Pages (first deploy)
+`npx wrangler dev` reads `apps/scooters/wrangler.jsonc` and serves `out/` through
+the same asset routing the live site uses, so a routing surprise shows up here
+instead of after a deploy. A plain static server (`npx serve apps/scooters/out`)
+renders the pages too, but it does not reproduce that routing.
 
-Dashboard → **Workers & Pages → Create → Pages → Connect to Git** → pick
+### How it deploys: GitHub → Cloudflare (Workers Builds)
+
+Pushing to `main` — or opening a pull request — triggers a Cloudflare build that
+runs the build command, then `npx wrangler deploy` from `apps/scooters`, which
+uploads `out/` as **static assets** of an asset-only Worker. No server, no
+OpenNext, nothing to keep running.
+
+Dashboard → **Workers & Pages → Create → Workers → Connect to Git** → pick
 `JimmydeKroon/dila-website`, then set:
 
 | Field | Value |
 | --- | --- |
 | Production branch | `main` |
-| Framework preset | **None** — not "Next.js", which assumes SSR |
 | Root directory | `apps/scooters` |
 | Build command | `cd ../.. && pnpm install --frozen-lockfile && pnpm --filter @dila/scooters build` |
-| Build output directory | `out` |
+| Deploy command | `npx wrangler deploy` — the default, leave it |
 
-Leave the build system version on v2 (Node 22). It satisfies `engines.node`
-(`>=20.9.0`) and honours the `packageManager: pnpm@12.11.2` pin.
+`apps/scooters/wrangler.jsonc` must keep `name: "dila-website"` matching the
+Worker in the dashboard, and must not be deleted — see the comment at the top of
+that file for the failure it prevents.
 
 Notes that matter:
 
+- **The deploy command only works because `apps/scooters/wrangler.jsonc`
+  exists.** Without a Wrangler config, `wrangler deploy` runs *automatic
+  configuration*, sees Next.js, and tries to convert the project to OpenNext SSR
+  — the wrong shape for a static export. That step then runs a plain `npm
+  install`, which cannot parse this repo's `workspace:*` dependencies and fails
+  the build with `npm error Unsupported URL Type "workspace:": workspace:*`.
+  A committed config suppresses auto-configuration entirely.
 - The build command must not be a bare `pnpm build` — that is Turborepo and would
   run every workspace task instead of just this app.
 - The **root directory is `apps/scooters` while the install runs from the repo
-  root**, because the shared `packages/*` are outside the app directory. This is
-  the monorepo trap: a host that only installs inside `apps/scooters` cannot
-  resolve `@dila/ui` or `@dila/content` and fails on the missing packages.
-- Every branch and pull request gets its own preview URL
-  (`<branch>.<project>.pages.dev`), and those URLs are public by default — which
-  is exactly what makes them usable as a client review link.
-- `pages.dev` and `workers.dev` are fine for a review link but Cloudflare's own
-  docs say they are not for business-critical production, so point the client's
-  real domain at the project for launch.
+  root** (`cd ../..`), because the shared `packages/*` are outside the app
+  directory. This is the monorepo trap: a host that only installs inside
+  `apps/scooters` cannot resolve `@dila/ui` or `@dila/content` and fails on the
+  missing packages.
+- Every branch and pull request gets its own preview URL, and those URLs are
+  public by default — which is exactly what makes them usable as a client review
+  link.
+- `workers.dev` is fine for a review link, but Cloudflare's own docs say it is
+  not for business-critical production, so point the client's real domain at the
+  project for launch.
 
 ### Publishing a new build
 
-Push to `main`; Pages rebuilds automatically. For a manual deploy without Git:
+Push to `main` and Cloudflare rebuilds automatically. To deploy by hand:
 
 ```bash
 pnpm build
-npx wrangler pages deploy apps/scooters/out --project-name dila-website
+cd apps/scooters && npx wrangler deploy
 ```
 
 `npx wrangler login` once, first. No environment variables are needed to build or
 deploy — there are no secrets in this project.
+
+> If the Worker name collides with an older project in the same account, rename
+> it in `apps/scooters/wrangler.jsonc` **and** in the dashboard.
 
 > **Draft indexing.** `app/robots.ts` currently allows crawling. Flip `allow` to
 > `disallow` there if the review URL must stay out of search engines.
