@@ -49,9 +49,10 @@ export const nl: Dictionary = {
     eyebrow: "Over Dila",
     title: "Twee zaken naast elkaar in Purmerend",
     paragraphs: [
-      "Dila is geen standaard winkel. Op de Maxwellstraat vind je twee zaken direct naast elkaar: Dila Scooters en Brommers en Dila Watersport. De ene kant draait om scooters, brommers en motoren, de andere om boten en jetski's.",
-      "Die combinatie is precies waar het bedrijf om draait: alles wat een motor heeft, krijgt bij ons dezelfde aandacht. Onze eigen werkplaats is de spil van beide zaken, of het nu gaat om een onderhoudsbeurt, een reparatie of het zoeken naar een storing die maar blijft terugkomen.",
-      "Je bent altijd welkom om binnen te lopen en de voertuigen zelf te bekijken. Heb je een vraag over een model, een onderdeel of iets dat nog niet op deze website staat? Mail ons of kom langs — dan denken we met je mee.",
+      "Eigenaar/oprichter Dirk Langenberg is al jaren actief in de motorsport. Eerst als monteur van Hans Spaan, en later zelf als coureur bij het 50cc racen, waarin hij in 1996 Nederlands kampioen is geworden.",
+      "Na deze tijd is hij begonnen in het algemeen draai-, frees-, las- en constructiewerk met daarbij als grote hobby het tunen van 2-takt motoren. De laatste jaren hebben de scooters en bromfietsen de overhand genomen en was het bedrijf zeer actief binnen het scooter racen. Wij waren dan ook het tuningsbedrijf voor het Creco-Polini raceteam dat kampioen is geworden met coureur Arie Vos. Met de ervaring die we mede hiermee hebben opgedaan, kunnen wij ons daarom ook één van de meest gespecialiseerde scooter speciaal zaken van Nederland noemen.",
+      "Na 2 jaar achter elkaar kampioen van Nederland te zijn geworden met Arie Vos en Yrjo van Mil hebben Creco BV en Dila Tuning besloten om op het hoogtepunt te stoppen. Wij hebben erg veel plezier beleefd en zeer goede resultaten behaald de afgelopen 4 jaar. De tijd om 3 scooters raceklaar te houden is naast onze drukke werkzaamheden in beide bedrijven teveel geworden.",
+      "Vanuit eigen interesse is hier in 2005 een divisie Watersport bij gekomen. Bij uitstek dé manier van ontspannen!",
     ],
     facts: [
       {
@@ -71,7 +72,8 @@ export const nl: Dictionary = {
       },
     ],
     galleryTitle: "Een kijkje in de winkel",
-    galleryLead: "De showroom en het magazijn op de Maxwellstraat in Purmerend.",
+    galleryLead:
+      "De showroom en het magazijn op de Maxwellstraat in Purmerend.",
   },
 
   contact: {
@@ -86,14 +88,14 @@ export const nl: Dictionary = {
     mapCta: "Routebeschrijving",
     siblingTitle: "Ook aan de watersport toe?",
     siblingComingSoon: "De website van Dila Watersport volgt binnenkort.",
-    formNote: "Een contactformulier volgt zodra de definitieve contactgegevens van de klant binnen zijn.",
+    formNote:
+      "Een contactformulier volgt zodra de definitieve contactgegevens van de klant binnen zijn.",
   },
 
   footer: {
-    tagline: "Scooters, brommers en motoren in Purmerend — met een eigen werkplaats voor onderhoud en reparatie.",
+    tagline:
+      "Scooters, brommers en motoren in Purmerend — met een eigen werkplaats voor onderhoud en reparatie.",
     rights: "Alle rechten voorbehouden.",
-    draftNotice:
-      "Conceptversie: bedrijfsgegevens en teksten worden nog met de klant afgestemd.",
   },
 
   brandPage: {
@@ -102,9 +104,9 @@ export const nl: Dictionary = {
     storyTitle: "Over",
     officialTitle: "Het actuele aanbod",
     officialCta: "Bekijk het aanbod",
-    galleryTitle: "Uit de werkplaats en de showroom",
+    galleryTitle: "De perfecte scooter voor u",
     galleryLead:
-      "Een kijkje in onze werkplaats in Purmerend, waar elke scooter en motor — welk merk dan ook — dezelfde aandacht krijgt.",
+      "Kijk voor actuele modellen, specificaties en prijzen op de website van de fabrikant. Wij helpen u graag met het maken van een keuze en kunnen alle modellen leveren.",
   },
 
   notFound: {

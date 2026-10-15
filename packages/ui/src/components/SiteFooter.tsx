@@ -176,7 +176,6 @@ export function SiteFooter({
           <p>
             © {year} {site.name}. {dict.footer.rights}
           </p>
-          <p>{dict.footer.draftNotice}</p>
         </div>
       </Container>
     </footer>
