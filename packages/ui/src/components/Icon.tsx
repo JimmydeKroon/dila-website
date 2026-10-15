@@ -39,6 +39,12 @@ const paths = {
       <path d="m11 6-6 6 6 6" />
     </>
   ),
+  arrowDown: (
+    <>
+      <path d="M12 5v14" />
+      <path d="m6 13 6 6 6-6" />
+    </>
+  ),
   check: <path d="M20 6 9 17l-5-5" />,
   menu: (
     <>

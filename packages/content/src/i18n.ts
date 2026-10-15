@@ -1,4 +1,4 @@
-import type { Locale } from "./types";
+import type { FeatureIcon, Locale } from "./types";
 import { nl } from "./locales/nl";
 
 /**
@@ -24,7 +24,6 @@ export interface Dictionary {
     contact: string;
     menu: string;
     closeMenu: string;
-    call: string;
   };
 
   hero: {
@@ -50,15 +49,15 @@ export interface Dictionary {
     lead: string;
     /** Explains that brommers and motoren have no APK obligation. */
     note: string;
+    /** Caption under the workshop photo grid, also its accessible name. */
     imageCaption: string;
-    cta: string;
   };
 
   about: {
     eyebrow: string;
     title: string;
     paragraphs: string[];
-    facts: { title: string; body: string }[];
+    facts: { title: string; body: string; icon: FeatureIcon }[];
     galleryTitle: string;
     galleryLead: string;
   };
@@ -68,8 +67,8 @@ export interface Dictionary {
     title: string;
     lead: string;
     addressLabel: string;
-    phoneLabel: string;
     emailLabel: string;
+    phoneLabel: string;
     hoursLabel: string;
     closedLabel: string;
     mapCta: string;
@@ -81,9 +80,6 @@ export interface Dictionary {
 
   footer: {
     tagline: string;
-    exploreTitle: string;
-    contactTitle: string;
-    hoursTitle: string;
     rights: string;
     /** Short note that the contact details still need client confirmation. */
     draftNotice: string;
@@ -93,18 +89,10 @@ export interface Dictionary {
     back: string;
     originLabel: string;
     storyTitle: string;
-    categoriesTitle: string;
-    categoriesLead: string;
-    modelsTitle: string;
     officialTitle: string;
-    officialBody: string;
     officialCta: string;
-    whyTitle: string;
-    whyPoints: string[];
-    ctaTitle: string;
-    ctaBody: string;
-    ctaPrimary: string;
-    ctaSecondary: string;
+    galleryTitle: string;
+    galleryLead: string;
   };
 
   notFound: {

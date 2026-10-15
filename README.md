@@ -28,11 +28,14 @@ what makes the second shop and a future CMS cheap.
 ## Getting started
 
 ```bash
-corepack enable            # activates the pinned pnpm version
 pnpm install
 pnpm dev                   # all apps
 pnpm --filter @dila/scooters dev
 ```
+
+> Node 26 does not ship Corepack any more, so `pnpm` 12.11.2 (the version pinned
+> in `packageManager`) is expected to be installed globally. On Node 20/22/24,
+> `corepack enable` still activates exactly that version.
 
 | Command | What it does |
 | --- | --- |
@@ -57,10 +60,10 @@ pnpm --filter @dila/scooters dev
 | What | File |
 | --- | --- |
 | Address, phone, e-mail, opening hours, themes | `packages/content/src/site.ts` |
-| Brands (story, categories, models, official links) | `packages/content/src/brands.ts` |
+| Brands (story, models, hero + gallery photos, official links) | `packages/content/src/brands.ts` |
 | Maintenance services | `packages/content/src/services.ts` |
 | Every UI string | `packages/content/src/locales/nl.ts` |
-| Images used by this app | `apps/scooters/lib/content.ts` |
+| Images used by this app (hero, workshop, shop gallery) | `apps/scooters/lib/content.ts` |
 | Design tokens + per-shop accent | `packages/ui/src/styles/theme.css` |
 
 ### Adding a brand
@@ -87,11 +90,14 @@ versions into `apps/scooters/public/images/`. The script:
 - crops the baked-in Google Maps navigation arrows and watermark off the
   screenshots that had them,
 - resizes and re-encodes to progressive JPEG (max 2000px, ~348 KB for the hero),
-- rebuilds the square white-on-black logo as a **transparent PNG**
-  (`logo/dila-logo-light.png`) so it works on the dark footer.
+- trims and resizes the client's logo to `logo/dila-logo.png` — the supplied
+  `dila.png` is already transparent, so there is nothing to key out,
+- crops the brand photos to 16:10 (`brands/<slug>-scooter.jpg`) and the gallery
+  pool to 4:3 (`gallery/gallery-NN.jpg`).
 
-Brand logos are used as supplied, rendered inside white chips on the hero —
-inverting them would turn the solid-red Derbi mark into an unreadable block.
+Brand logos are used as supplied, rendered inside white chips on the hero and at
+the top of each brand page — inverting them would turn the solid-red Derbi mark
+into an unreadable block.
 
 ## Known placeholders / open questions
 
@@ -99,14 +105,16 @@ inverting them would turn the solid-red Derbi mark into an unreadable block.
       domain they own. Confirm or remove.
 - [ ] **Canonical domain** — `https://dila.nl` is a placeholder until the client
       hands over the domain and hosting details.
-- [ ] **Logo** — the header uses a typographic wordmark because the supplied
-      logo is white-on-black and cannot sit on a light background. Swap it in
-      `packages/ui/src/components/Logo.tsx` when a vector wordmark exists.
+- [ ] **Logo quality** — the header and footer use the client's `dila.png`, a
+      raster file, at 52px and 72px. A vector version would sharpen it and give
+      the site a real favicon; nothing else needs to change to swap it in.
 - [ ] **Favicon** — `app/icon.svg` is a placeholder "D" in the accent red.
 - [ ] **Brand list** — only the five named brands are in; the client has more.
-- [ ] **Brand card photos** — `brands/<slug>-scooter.jpg` are generated
-      "FOTO VOLGT" placeholders. Replace them with real product shots (the
-      client said these will come from the manufacturers) at the same paths.
+- [ ] **Brand and gallery photos are stock stand-ins** — `brands/<slug>-scooter.jpg`
+      and `gallery/gallery-NN.jpg` are Unsplash photos (Unsplash License), not
+      the client's products, and some show models from brands we do not carry.
+      Replace them with real shots from the manufacturers at the same paths —
+      and replace the matching `alt` texts in `brands.ts`.
 - [ ] **Photo rights** — the shop photos came from Google Maps exports. The
       client must confirm they own or have permission to use them.
 - [ ] **Workshop photos** — only one exists so far; the gallery currently shows

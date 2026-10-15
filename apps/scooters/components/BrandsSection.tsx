@@ -2,6 +2,7 @@ import { brands, getDictionary } from "@dila/content";
 import {
   BrandCard,
   Container,
+  Reveal,
   Section,
   SectionHeading,
 } from "@dila/ui";
@@ -12,16 +13,21 @@ export function BrandsSection() {
   return (
     <Section id="merken" tone="paper" aria-labelledby="brands-title">
       <Container width="wide">
-        <SectionHeading
-          id="brands-title"
-          eyebrow={dict.brandsSection.eyebrow}
-          title={dict.brandsSection.title}
-          lead={dict.brandsSection.lead}
-          align="center"
-          className="mx-auto"
-        />
+        <Reveal className="mx-auto max-w-2xl">
+          <SectionHeading
+            id="brands-title"
+            eyebrow={dict.brandsSection.eyebrow}
+            title={dict.brandsSection.title}
+            lead={dict.brandsSection.lead}
+            align="center"
+          />
+        </Reveal>
 
-        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <Reveal
+          as="ul"
+          stagger
+          className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {brands.map((brand) => (
             <BrandCard
               key={brand.slug}
@@ -29,7 +35,7 @@ export function BrandsSection() {
               ctaLabel={dict.brandsSection.cardCta}
             />
           ))}
-        </ul>
+        </Reveal>
 
         <p className="mt-8 text-center text-sm text-ink-500">
           {dict.brandsSection.note}

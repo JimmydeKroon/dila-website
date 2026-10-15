@@ -1,4 +1,36 @@
-import type { Brand } from "./types";
+import type { Brand, ImageRef } from "./types";
+
+/**
+ * Photo pool for the mosaic at the bottom of every brand page.
+ *
+ * These are **Unsplash placeholders** (Unsplash License: free for commercial
+ * use, no attribution required) standing in until the client supplies real
+ * workshop and product photography. Both the files and these descriptions must
+ * be replaced together — an alt text that no longer matches its photo is worse
+ * than none. `pnpm images` keeps the filenames stable, so swapping the photos
+ * never touches this file's `src` values.
+ */
+export const galleryPool: ImageRef[] = [
+  { src: "/images/gallery/gallery-01.jpg", alt: "Monteur aan het werk aan een motorfiets" },
+  { src: "/images/gallery/gallery-02.jpg", alt: "Motorfiets in onderhoud in de werkplaats" },
+  { src: "/images/gallery/gallery-03.jpg", alt: "Close-up van een uitlaat en een wiel" },
+  { src: "/images/gallery/gallery-04.jpg", alt: "Een helm wordt schoongemaakt naast een motorfiets" },
+  { src: "/images/gallery/gallery-05.jpg", alt: "Motorfietsen geparkeerd voor een pand" },
+  { src: "/images/gallery/gallery-06.jpg", alt: "Een rij motorfietsen op een klinkerweg" },
+  { src: "/images/gallery/gallery-07.jpg", alt: "Scooter in een smalle Europese straat" },
+  { src: "/images/gallery/gallery-08.jpg", alt: "Gereedschap in de werkplaats" },
+];
+
+/**
+ * Six photos per brand page, rotated through the pool so no two brand pages
+ * open with the same image.
+ */
+function galleryFor(index: number): ImageRef[] {
+  return Array.from(
+    { length: 6 },
+    (_, offset) => galleryPool[(index * 3 + offset) % galleryPool.length]!,
+  );
+}
 
 /**
  * Brands carried by Dila Scooters en Brommers.
@@ -18,6 +50,12 @@ export const brands: Brand[] = [
       src: "/images/brands/vespa-scooter.jpg",
       alt: "Vespa scooter in de showroom van Dila",
     },
+    hero: {
+      src: "/images/brands/vespa-scooter.jpg",
+      alt: "Vespa scooter",
+      focal: "50% 45%",
+    },
+    gallery: galleryFor(0),
     logoSrc: "/images/brands/vespa.svg",
     logoWidth: 450,
     logoHeight: 155,
@@ -53,6 +91,12 @@ export const brands: Brand[] = [
       src: "/images/brands/kymco-scooter.jpg",
       alt: "KYMCO scooter bij Dila in Purmerend",
     },
+    hero: {
+      src: "/images/brands/kymco-scooter.jpg",
+      alt: "KYMCO scooter",
+      focal: "50% 55%",
+    },
+    gallery: galleryFor(1),
     logoSrc: "/images/brands/kymco.svg",
     logoWidth: 184,
     logoHeight: 100,
@@ -88,6 +132,12 @@ export const brands: Brand[] = [
       src: "/images/brands/derbi-scooter.jpg",
       alt: "Derbi brommer bij Dila in Purmerend",
     },
+    hero: {
+      src: "/images/brands/derbi-scooter.jpg",
+      alt: "Derbi brommer",
+      focal: "50% 50%",
+    },
+    gallery: galleryFor(2),
     logoSrc: "/images/brands/derbi.svg",
     logoWidth: 142,
     logoHeight: 44,
@@ -123,6 +173,12 @@ export const brands: Brand[] = [
       src: "/images/brands/yamaha-scooter.jpg",
       alt: "Yamaha scooter bij Dila in Purmerend",
     },
+    hero: {
+      src: "/images/brands/yamaha-scooter.jpg",
+      alt: "Yamaha motorfiets",
+      focal: "50% 45%",
+    },
+    gallery: galleryFor(3),
     logoSrc: "/images/brands/yamaha.svg",
     logoWidth: 524,
     logoHeight: 114,
@@ -163,6 +219,12 @@ export const brands: Brand[] = [
       src: "/images/brands/peugeot-scooter.jpg",
       alt: "Peugeot scooter bij Dila in Purmerend",
     },
+    hero: {
+      src: "/images/brands/peugeot-scooter.jpg",
+      alt: "Peugeot scooter",
+      focal: "50% 50%",
+    },
+    gallery: galleryFor(4),
     logoSrc: "/images/brands/peugeot.svg",
     logoWidth: 283,
     logoHeight: 200,

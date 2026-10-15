@@ -1,16 +1,17 @@
 import Image from "next/image";
 import type { Dictionary, SiteInfo } from "@dila/content";
-import type { NavItem } from "./SiteHeader";
 import { Container } from "./Container";
 import { Icon } from "./Icon";
+import { Reveal } from "./Reveal";
+import { SectionHeading } from "./SectionHeading";
+import { SiblingPromo } from "./SiblingPromo";
 
 interface SiteFooterProps {
   site: SiteInfo;
   dict: Dictionary;
-  navItems: NavItem[];
   /**
-   * Light logo artwork for the dark footer. The client's supplied logo is
-   * white-on-black, so it belongs here rather than in the light header.
+   * The client's logo. Transparent, full colour, so it needs no chip on the
+   * dark band.
    */
   logoSrc: string;
   logoWidth: number;
@@ -20,117 +21,155 @@ interface SiteFooterProps {
 }
 
 /**
- * Opening hours deliberately do NOT appear here: the contact section directly
- * above already renders them, and showing them twice at the foot of the page
- * read as a duplication.
+ * Contact and footer in one block.
+ *
+ * They used to be two stacked dark sections that repeated the same address,
+ * e-mail address and route link a few hundred pixels apart, which read as a
+ * mistake. This is the single dark band at the foot of every page: contact
+ * details first, then the logo with the shop's tagline, then the legal line.
+ *
+ * It carries `id="contact"` because the "Contact" item in the menu points at it,
+ * and it is part of the layout rather than the home page, so `/#contact` also
+ * resolves from a brand detail page. Opening hours appear exactly once, here.
+ *
+ * There is no second menu down here. It repeated the header a thousand pixels
+ * below itself, so the logo and the tagline simply sit under the address now and
+ * the band needs one divider instead of two.
+ *
+ * The phone number appears here — and, since the maintenance section dropped its
+ * button, nowhere else on the site.
  */
 export function SiteFooter({
   site,
   dict,
-  navItems,
   logoSrc,
   logoWidth,
   logoHeight,
-  logoSize = 88,
+  logoSize = 72,
 }: SiteFooterProps) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-ink-950 pt-16 pb-8 text-ink-300">
+    <footer
+      id="contact"
+      aria-labelledby="contact-title"
+      className="bg-ink-950 pt-16 pb-8 text-ink-300"
+    >
       <Container width="wide">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr]">
-          <div>
-            <Image
-              src={logoSrc}
-              alt={site.name}
-              width={logoWidth}
-              height={logoHeight}
-              style={{ height: logoSize, width: "auto" }}
-              className="object-contain"
+        <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+          <Reveal>
+            <SectionHeading
+              id="contact-title"
+              eyebrow={dict.contact.eyebrow}
+              title={dict.contact.title}
+              lead={dict.contact.lead}
+              onDark
             />
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-ink-400">
-              {dict.footer.tagline}
-            </p>
-          </div>
 
-          <nav aria-label="Footermenu">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-white">
-              {dict.footer.exploreTitle}
-            </h2>
-            <ul className="mt-4 flex flex-col gap-2.5">
-              {navItems.map((item) => (
-                <li key={item.href}>
-                  <a
-                    href={item.href}
-                    className="text-sm text-ink-300 transition-colors hover:text-white"
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-white">
-              {dict.footer.contactTitle}
-            </h2>
-            <ul className="mt-4 flex flex-col gap-3 text-sm">
-              <li className="flex gap-2.5">
-                <Icon
-                  name="pin"
-                  size={16}
-                  className="mt-0.5 shrink-0 text-ink-500"
-                />
-                <span>
+            <dl className="mt-10 grid gap-6 sm:grid-cols-2">
+              <div>
+                <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+                  <Icon name="pin" size={14} />
+                  {dict.contact.addressLabel}
+                </dt>
+                <dd className="mt-2 text-sm leading-relaxed text-white">
                   {site.address.street}
                   <br />
                   {site.address.postalCode} {site.address.city}
-                </span>
-              </li>
-              <li className="flex gap-2.5">
-                <Icon
-                  name="phone"
-                  size={16}
-                  className="mt-0.5 shrink-0 text-ink-500"
-                />
-                <a
-                  href={site.phoneHref}
-                  className="transition-colors hover:text-white"
-                >
-                  {site.phone}
-                </a>
-              </li>
-              <li className="flex gap-2.5">
-                <Icon
-                  name="mail"
-                  size={16}
-                  className="mt-0.5 shrink-0 text-ink-500"
-                />
-                <a
-                  href={`mailto:${site.email}`}
-                  className="break-all transition-colors hover:text-white"
-                >
-                  {site.email}
-                </a>
-              </li>
-              <li className="flex gap-2.5">
-                <Icon
-                  name="map"
-                  size={16}
-                  className="mt-0.5 shrink-0 text-ink-500"
-                />
+                  <br />
+                  {site.address.country}
+                </dd>
                 <a
                   href={site.mapsUrl}
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="transition-colors hover:text-white"
+                  className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-light hover:underline"
                 >
                   {dict.contact.mapCta}
+                  <Icon name="external" size={14} />
                 </a>
-              </li>
-            </ul>
-          </div>
+              </div>
+
+              <div className="flex flex-col gap-6">
+                <div>
+                  <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+                    <Icon name="mail" size={14} />
+                    {dict.contact.emailLabel}
+                  </dt>
+                  <dd className="mt-2">
+                    <a
+                      href={`mailto:${site.email}`}
+                      className="text-sm font-semibold break-all text-white hover:text-accent-light"
+                    >
+                      {site.email}
+                    </a>
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+                    <Icon name="phone" size={14} />
+                    {dict.contact.phoneLabel}
+                  </dt>
+                  <dd className="mt-2">
+                    <a
+                      href={site.phoneHref}
+                      className="text-sm font-semibold text-white hover:text-accent-light"
+                    >
+                      {site.phone}
+                    </a>
+                  </dd>
+                </div>
+              </div>
+            </dl>
+
+            {/* The logo and the tagline sign the contact block off. They used to
+                sit in a second block below a divider, next to a repetition of
+                the page menu. */}
+            <div className="mt-10 flex items-start gap-5">
+              <Image
+                src={logoSrc}
+                alt={site.name}
+                width={logoWidth}
+                height={logoHeight}
+                style={{ height: logoSize, width: "auto" }}
+                className="shrink-0 object-contain"
+              />
+              <p className="max-w-sm text-sm leading-relaxed text-ink-400">
+                {dict.footer.tagline}
+              </p>
+            </div>
+          </Reveal>
+
+          <Reveal className="flex flex-col gap-6">
+            <div className="rounded-2xl border border-white/10 bg-ink-900 p-6">
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-ink-400">
+                <Icon name="clock" size={14} />
+                {dict.contact.hoursLabel}
+              </p>
+              <dl className="mt-4 divide-y divide-white/10">
+                {site.hours.map((entry) => (
+                  <div
+                    key={entry.day}
+                    className="flex items-center justify-between gap-4 py-2.5 text-sm"
+                  >
+                    <dt className="text-ink-300">{entry.day}</dt>
+                    <dd
+                      className={
+                        entry.closed
+                          ? "text-ink-500"
+                          : "font-semibold text-white"
+                      }
+                    >
+                      {entry.hours}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <SiblingPromo site={site} dict={dict} />
+          </Reveal>
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">

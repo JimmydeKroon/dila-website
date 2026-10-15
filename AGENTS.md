@@ -76,26 +76,84 @@ in `packages/content/src/site.ts`. Same for UI strings: they go in
 6. **Don't run a production build while the dev server is live** on a small
    machine — the OOM killer reaps one of them, which surfaces as exit 137 with
    no compiler output.
+7. **`html` must keep `data-scroll-behavior="smooth"`,** because `theme.css`
+   sets `scroll-behavior: smooth` on it. Next 16 reads that attribute to switch
+   smooth scrolling off for the duration of a route transition, and without it
+   the router's own scroll handling animates while the new page is still laying
+   out. The symptom is specific and looks like a content bug: a client-side
+   navigation to a long page lands *partway down it* instead of at the top —
+   clicking the header logo on a brand page dropped the visitor into the brands
+   section. Next logs a `missing-data-scroll-behavior` warning in dev, so treat
+   that warning as a real defect rather than noise.
 
 ## 4. Design decisions and the reasoning
 
 Don't "fix" these without reading why:
 
-- **The header uses a typographic wordmark, not the client's logo.** Their
-  supplied logo is a square, white-on-black PNG — it cannot sit on a light
-  header or act as a favicon. The real logo *is* used on the dark footer, as a
-  transparent PNG the image script derives. Replace `Logo.tsx` when the client
-  commissions a proper vector wordmark.
-- **Brand logos on the hero sit inside white chips**, not inverted. Inverting
-  them turns the Derbi mark (a solid red block with white text) into an
-  unreadable white rectangle. A future brand logo may break the same way.
-- **Brand card photos are generated "FOTO VOLGT" placeholders.** The client
-  said product photos will come from the manufacturers. Drop real photos at
-  `apps/scooters/public/images/brands/<slug>-scooter.jpg` — same filenames,
-  no code change.
+- **The header and the footer use the client's real logo**, `dila.png`, which
+  turned out to have a transparent background already (the earlier white-on-black
+  square was a different export). One file, one `Logo` component, two sizes: 52px
+  in the header bar, 72px in the footer. Nothing derives a light-on-dark variant
+  any more — the artwork reads on paper and on ink alike. The typographic
+  wordmark placeholder is gone.
+- **Brand logos sit on white chips**, not on the background and never inverted.
+  Most of the marks are near-black artwork (Vespa, Yamaha, Peugeot), so on the
+  hero photo they need a plate to be readable at all, and inverting is not the
+  alternative: the Derbi mark is a solid red block that would invert into an
+  unreadable white rectangle. That is why the home page's brand row is inside
+  the hero at its foot (`Hero`'s `bottom` slot, `BrandStrip variant="dark"`) and
+  why a brand page shows its mark in a chip above the headline. The chips *were*
+  removed once, by moving the row onto a paper band below the hero and the brand
+  mark into the story section; the client wanted the original treatment back.
+- **Brand and gallery photos are Unsplash placeholders.** The client said
+  product photos will come from the manufacturers, so the grid, the brand hero
+  and the brand-page mosaic are filled with stock photography for now (Unsplash
+  License: commercial use allowed, no attribution required). They are **not
+  brand-authentic** — the Derbi card shows a scooter that is not a Derbi — and
+  must not survive the first content review. Replacing them is a file swap:
+  `assets/brand-photos/<slug>.jpg` and `assets/gallery/gallery-NN.jpg`, same
+  filenames, then `pnpm images`. If a brand photo is missing, the pipeline falls
+  back to a generated "FOTO VOLGT" tile so the grid never looks broken.
+- **The phone number is printed in exactly one place: the footer.** The client
+  does not want the site to push visitors to call — everything else points at
+  the address, the opening hours and e-mail. No `tel:` link exists outside the
+  footer's own `tel:` href, and no copy says "bel ons".
+- **The maintenance section has no call to action at all.** It went through
+  three phases: a button plus a "liever bellen?" line (both dialling the same
+  number, read as a duplicate), then the button alone, and finally neither. It
+  is now a photo grid of the workshop beside a card per service — the section
+  describes the work instead of selling it. Do not add a `tel:` link back; the
+  number lives in the footer only. The APK note that used to close the section
+  is gone as well — see the APK bullet below.
+- **The hero has a `bottom` slot but no `aside` slot.** `bottom` is the
+  full-width row below a hairline at the foot of the photo, and the brand strip
+  is the only thing that uses it. `aside` was the right-hand scroll cue, removed
+  because it duplicated the "Bekijk onze merken" button a few centimetres away —
+  do not add a second way to jump to the same section.
+- **The number stays in the JSON-LD (`telephone`)** because that is metadata for
+  search engines, not a call to action — remove it only if the client asks. Note
+  that the shared `CallToAction` component still hardcodes a phone icon; it is
+  currently unused, so make that icon configurable before using it again.
+- **Brand pages are three sections, not seven.** A photo hero, the story (with
+  the link to the manufacturer's own site), and a photo mosaic. The older
+  category cards, model grid, "why us" list and CTA band were cut deliberately:
+  the page is meant to be read top to bottom. A "Modellen" sidebar card was cut
+  later for the same reason — the story paragraphs already name models — so
+  `Brand.models` and `Brand.categories` are rendered nowhere and their dictionary
+  strings (`brandPage.modelsTitle`, `brandPage.modelsLead`) are gone. The data
+  itself stays: it is the client's, it costs nothing, and it is what a future
+  "modellen" block would read.
+- **Scroll animation is progressive enhancement.** `Reveal` sets its hidden
+  state at runtime, never in the server-rendered HTML. A server-rendered
+  `opacity: 0` would turn the hydration failure in §3 into a *blank page* with
+  no error anywhere; this way the worst case is "no animation". The CSS is also
+  gated on `prefers-reduced-motion`, so disabling motion in the OS removes the
+  animation rather than shortening it.
 - **Never claim "APK" for a brommer, snorfiets or motorfiets.** They have no
-  APK obligation in the Netherlands. The copy deliberately says
-  "veiligheidscontrole" instead. Also: snorfiets helmets have been mandatory
+  APK obligation in the Netherlands, which is what the maintenance note said
+  before it was cut from the page as a full-width band nobody needed to read.
+  `dict.maintenance.note` is still in the dictionary, unused — put it somewhere
+  smaller if the claim has to be on the site. Also: snorfiets helmets have been mandatory
   since 1 Jan 2023, and brommer = 45 km/u (yellow plate) vs snorfiets = 25 km/u
   (blue plate). Keep legal claims accurate — this was researched, not guessed.
 - **No prices, no pickup service, no booking form.** None were confirmed by the
@@ -103,8 +161,32 @@ Don't "fix" these without reading why:
 - **No Google Maps iframe.** Embedding drops third-party cookies without
   consent, which would drag a cookie banner in. Map blocks are styled links out
   to Google Maps. `site.mapEmbedUrl` exists if they ever accept a consent notice.
-- **Opening hours appear exactly once** (contact section). They were briefly
-  also in the footer and read as a duplication.
+- **Contact and footer are one band, not two.** They used to be a contact
+  section plus a footer that repeated the same address, e-mail and route link a
+  few hundred pixels apart. `ContactBlock` is gone; `SiteFooter` is the single
+  dark block at the foot of every page and carries `id="contact"`, which is what
+  the menu's "Contact" item anchors to. It lives in the layout, so `/#contact`
+  resolves from a brand page too. Anything contact-related belongs there. The
+  logo and the tagline signed the band off under the address; the second menu
+  ("Op deze pagina") was removed, because it repeated the header a thousand
+  pixels below itself, and with it went the first divider. One `border-t`
+  remains, above the copyright line.
+- **The header floats over the hero.** It is `fixed`, starts transparent with
+  the white nav, and turns into the paper bar once it is scrolled
+  (or while the mobile menu is open, since the menu panel is white). Mechanics
+  to keep in mind when touching either component: because the header is out of
+  the flow, `layout.tsx` gives `main` a top padding of one header height
+  (`pt-20`, matching the bar's `h-20`) and `Hero` cancels it with `-mt-20` so
+  the photo runs to the top of the window. A new full-bleed block at the top of
+  a page must do the same, and a page without a hero gets the clearance for
+  free. The header and the hero share `Container width="full"`, which is also
+  why the two are the only full-bleed bands on the site: the rest stays in the
+  centred `wide` column. The overlay is also gated on the page actually opening
+  with a hero: `Hero` marks itself with `data-hero` and the header looks for
+  that on the first block in `main`, falling back to the solid bar. That is what
+  keeps the full-colour logo legible over the 404's white background — if you
+  wrap a hero in another element, the marker must stay the first child of `main`
+  or the bar goes solid.
 - **No `geo` coordinates and no `department` link between the two shops** in
   the JSON-LD. Neither was confirmed; a wrong pin or a wrong company structure
   in structured data is worse than nothing.
@@ -119,9 +201,14 @@ Don't "fix" these without reading why:
 
 - The shop photos were exported from **Google Maps** and have navigation arrows
   and a watermark burned in. The script crops those off per-file (`crop` keys).
-- The client's logo is rebuilt as a **transparent PNG** by mapping each pixel's
-  brightest channel to alpha — the standard "remove black background" trick.
-- Brand card placeholders are generated here, not hand-made.
+- The client's logo is **trimmed and resized, nothing more**: `dila.png`
+  already has a transparent background, so there is no chroma-keying step to
+  keep in sync. Output is `logo/dila-logo.png`, 640px.
+- Brand photos are cropped to **16:10** (one ratio serves both the card and the
+  wide brand hero) and the gallery pool to **4:3**. The mosaic crops those tiles
+  further at render time, so keep new sources landscape and roomy.
+- A brand with no source photo gets a generated "FOTO VOLGT" tile instead of a
+  broken image.
 
 ## 6. Unconfirmed / placeholder — do not treat as final
 
@@ -131,7 +218,13 @@ Don't "fix" these without reading why:
 - [ ] **Photo rights** — the shop photos came from Google Maps exports; the
       client must confirm they may be published.
 - [ ] **Favicon** is a placeholder "D" in the accent red.
-- [ ] **No workshop photo set** — there is one; the gallery shows the showroom.
+- [ ] **Brand and gallery photos are stock, not the client's.** See the note in
+      §4 — they are stand-ins with the right *shape*, and several show models
+      from brands we do not carry. Replace before launch, and replace the `alt`
+      text with them: the alt texts in `brands.ts` describe the current photos.
+- [ ] **No workshop photo set** — there is one real workshop photo. The
+      maintenance section and the brand mosaics are filled from the same
+      placeholder pool (`galleryPool` in `packages/content/src/brands.ts`).
 - [ ] **`app/robots.ts` currently allows crawling.** Make indexing a build-time
       switch before any review deployment so a draft URL is never indexed.
 
@@ -165,13 +258,19 @@ Brand links were checked, not guessed: KYMCO `kymco.nl`, Yamaha
 ## 8. Commands
 
 ```bash
-corepack enable
 pnpm install
 pnpm --filter @dila/scooters dev     # http://localhost:3000
 pnpm typecheck                       # tsc --noEmit, all packages
 pnpm build                           # production build
 pnpm images                          # regenerate derived images from assets/
 ```
+
+`corepack enable` used to be the first step. Node 26 **no longer ships
+Corepack**, so pnpm 12.11.2 — the version pinned in `packageManager` — is
+installed globally instead. On Node 20/22/24 `corepack enable` still works and
+honours the same pin, so that route is fine there too. Either way, every command
+above expects a `pnpm` on `PATH`; without one, Turbo cannot spawn the per-package
+tasks and `pnpm typecheck` fails with `Unable to find package manager binary`.
 
 ## 9. Where things live
 
@@ -188,7 +287,7 @@ pnpm images                          # regenerate derived images from assets/
 
 ## 10. Next up
 
-1. Get the client's **email, domain and real logo** (and confirm photo rights).
+1. Get the client's **email and domain** (and confirm photo rights).
 2. Real **scooter photos per brand** to replace the placeholders.
 3. **Phase 2: the watersport site.** `packages/content/src/site.ts` already has
    its `SiteInfo` (shared address/phone/hours, blue `data-shop` theme). Needs

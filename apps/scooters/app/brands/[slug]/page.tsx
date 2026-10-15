@@ -4,10 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { brands, getBrand, getDictionary, scooters } from "@dila/content";
 import {
-  BrandStrip,
-  CallToAction,
   Container,
+  Hero,
   Icon,
+  PhotoGallery,
+  Reveal,
   Section,
   SectionHeading,
 } from "@dila/ui";
@@ -37,216 +38,130 @@ export async function generateMetadata({
       title: `${brand.name} bij ${scooters.name}`,
       description: brand.summary,
       url: `/brands/${brand.slug}`,
+      images: [{ url: brand.hero.src, alt: brand.hero.alt }],
     },
   };
 }
 
+/**
+ * Three parts, deliberately kept short: a photo hero, one text section and a
+ * photo mosaic. The link to the manufacturer's own site lives inside the story
+ * section rather than in a section of its own — the page is meant to be read top
+ * to bottom, not scanned through five stacked blocks.
+ */
 export default async function BrandPage({ params }: PageProps) {
   const { slug } = await params;
   const brand = getBrand(slug);
   if (!brand) notFound();
 
-  const otherBrands = brands.filter((entry) => entry.slug !== brand.slug);
-
   return (
     <>
-      {/* Masthead ---------------------------------------------------------- */}
-      <section className="border-b border-line bg-surface pt-10 pb-14 sm:pt-12 sm:pb-16">
-        <Container width="wide">
-          <Link
-            href="/#merken"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-ink-500 transition-colors hover:text-accent-strong"
-          >
-            <Icon name="arrowLeft" size={16} />
-            {dict.brandPage.back}
-          </Link>
+      {/* Hero -------------------------------------------------------------- */}
+      <Hero
+        image={brand.hero}
+        size="page"
+        top={
+          <div className="flex flex-col gap-7">
+            <Link
+              href="/#merken"
+              className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-white/80 transition-colors hover:text-white"
+            >
+              <Icon name="arrowLeft" size={16} />
+              {dict.brandPage.back}
+            </Link>
 
-          <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="flex min-h-[56px] items-center">
-                <Image
-                  src={brand.logoSrc}
-                  alt={brand.name}
-                  width={brand.logoWidth}
-                  height={brand.logoHeight}
-                  style={{ height: brand.logoSize * 1.4, width: "auto" }}
-                  className="max-w-[220px] object-contain"
-                />
-              </div>
-
-              <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-accent-strong">
-                {dict.brandPage.originLabel}: {brand.origin}
-              </p>
-
-              <h1 className="mt-3 font-display text-4xl leading-[1.08] font-black tracking-tight text-ink-900 text-balance sm:text-5xl">
-                {brand.name}
-              </h1>
-
-              <p className="mt-5 text-base leading-relaxed text-ink-600 sm:text-lg">
-                {brand.summary}
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a
-                  href={brand.officialUrl}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-center gap-2 rounded-full border border-ink-200 bg-paper px-5 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:border-ink-300"
-                >
-                  {brand.officialLabel}
-                  <Icon name="external" size={16} />
-                </a>
-                <a
-                  href={scooters.phoneHref}
-                  className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink transition-colors hover:bg-accent-strong"
-                >
-                  <Icon name="phone" size={16} />
-                  {scooters.phone}
-                </a>
-              </div>
-            </div>
+            {/* The manufacturer marks are dark artwork, so they need a light
+                chip — the same treatment as the brand strip on the home page. */}
+            <span className="flex h-16 w-fit min-w-[6rem] items-center justify-center rounded-xl bg-white px-5 shadow-sm shadow-ink-950/25">
+              <Image
+                src={brand.logoSrc}
+                alt={brand.name}
+                width={brand.logoWidth}
+                height={brand.logoHeight}
+                style={{ height: brand.logoSize, width: "auto" }}
+                className="max-w-[180px] object-contain"
+              />
+            </span>
           </div>
-        </Container>
-      </section>
+        }
+        eyebrow={`${dict.brandPage.originLabel}: ${brand.origin}`}
+        title={brand.name}
+        lead={brand.summary}
+        actions={
+          <>
+            <a
+              href={brand.officialUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-base font-semibold text-accent-ink transition-colors hover:bg-accent-strong"
+            >
+              {dict.brandPage.officialCta}
+              <Icon name="external" size={18} />
+            </a>
+            <a
+              href="/#onderhoud"
+              className="inline-flex items-center gap-2 rounded-full border border-white/35 px-7 py-3.5 text-base font-semibold text-white transition-colors hover:border-white/60 hover:bg-white/10"
+            >
+              {dict.maintenance.title}
+            </a>
+          </>
+        }
+      />
 
       {/* Story ------------------------------------------------------------- */}
       <Section tone="paper" aria-labelledby="brand-story-title">
         <Container width="wide">
-          <SectionHeading
-            id="brand-story-title"
-            eyebrow={brand.origin}
-            title={`${dict.brandPage.storyTitle} ${brand.name}`}
-          />
-          <div className="mt-6 grid gap-5 lg:max-w-3xl">
-            {brand.story.map((paragraph) => (
-              <p
-                key={paragraph.slice(0, 32)}
-                className="text-base leading-relaxed text-ink-600"
-              >
-                {paragraph}
-              </p>
-            ))}
-          </div>
-        </Container>
-      </Section>
-
-      {/* Categories -------------------------------------------------------- */}
-      <Section tone="surface" aria-labelledby="brand-categories-title">
-        <Container width="wide">
-          <SectionHeading
-            id="brand-categories-title"
-            eyebrow={brand.name}
-            title={dict.brandPage.categoriesTitle}
-            lead={dict.brandPage.categoriesLead}
-          />
-
-          <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {brand.categories.map((category) => (
-              <li
-                key={category.name}
-                className="rounded-2xl border border-line bg-paper p-6"
-              >
-                <h3 className="font-display text-base font-bold text-ink-900">
-                  {category.name}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-600">
-                  {category.description}
+          <Reveal className="max-w-3xl">
+            <SectionHeading
+              id="brand-story-title"
+              eyebrow={brand.origin}
+              title={`${dict.brandPage.storyTitle} ${brand.name}`}
+            />
+            <div className="mt-6 flex flex-col gap-5">
+              {brand.story.map((paragraph) => (
+                <p
+                  key={paragraph.slice(0, 32)}
+                  className="text-base leading-relaxed text-ink-600"
+                >
+                  {paragraph}
                 </p>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </Section>
-
-      {/* Models + official site ------------------------------------------- */}
-      <Section tone="paper" aria-labelledby="brand-models-title">
-        <Container width="wide">
-          <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-            <div>
-              <SectionHeading
-                id="brand-models-title"
-                eyebrow={brand.name}
-                title={dict.brandPage.modelsTitle}
-              />
-              <ul className="mt-6 flex flex-wrap gap-2.5">
-                {brand.models.map((model) => (
-                  <li
-                    key={model}
-                    className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-700"
-                  >
-                    {model}
-                  </li>
-                ))}
-              </ul>
+              ))}
             </div>
 
-            <div className="rounded-2xl border border-line bg-surface p-7">
-              <h2 className="font-display text-xl font-bold text-ink-900">
-                {dict.brandPage.officialTitle}
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-ink-600">
-                {dict.brandPage.officialBody}
-              </p>
-              <a
-                href={brand.officialUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="mt-6 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-paper px-5 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:border-accent hover:text-accent-strong"
-              >
-                {dict.brandPage.officialCta} — {brand.officialLabel}
-                <Icon name="external" size={16} />
-              </a>
-            </div>
-          </div>
+            <a
+              href={brand.officialUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-accent-strong transition-colors hover:text-accent"
+            >
+              {dict.brandPage.officialTitle}
+              <Icon name="external" size={16} />
+            </a>
+          </Reveal>
         </Container>
       </Section>
 
-      {/* Why us ------------------------------------------------------------ */}
-      <Section tone="surface" aria-labelledby="brand-why-title">
+      {/* Photos ------------------------------------------------------------ */}
+      <Section tone="surface" aria-labelledby="brand-gallery-title">
         <Container width="wide">
-          <SectionHeading
-            id="brand-why-title"
-            eyebrow={dict.maintenance.eyebrow}
-            title={dict.brandPage.whyTitle}
-          />
-          <ul className="mt-8 grid gap-4 sm:grid-cols-3">
-            {dict.brandPage.whyPoints.map((point) => (
-              <li
-                key={point}
-                className="flex gap-3 rounded-2xl border border-line bg-paper p-5"
-              >
-                <Icon
-                  name="check"
-                  size={20}
-                  className="mt-0.5 shrink-0 text-accent-strong"
-                />
-                <span className="text-sm leading-relaxed text-ink-600">
-                  {point}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </Section>
+          <Reveal className="mx-auto max-w-2xl">
+            <SectionHeading
+              id="brand-gallery-title"
+              eyebrow={brand.name}
+              title={dict.brandPage.galleryTitle}
+              lead={dict.brandPage.galleryLead}
+              align="center"
+            />
+          </Reveal>
 
-      <CallToAction
-        title={dict.brandPage.ctaTitle.replace("{brand}", brand.name)}
-        body={dict.brandPage.ctaBody}
-        primary={{ label: scooters.phone, href: scooters.phoneHref }}
-        secondary={{ label: dict.brandPage.ctaSecondary, href: "/#merken" }}
-        footnote={`${scooters.address.street}, ${scooters.address.postalCode} ${scooters.address.city}`}
-      />
-
-      {/* Other brands ------------------------------------------------------ */}
-      <Section tone="paper" spacing="compact" aria-labelledby="brand-others-title">
-        <Container width="wide">
-          <h2
-            id="brand-others-title"
-            className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-ink-500"
-          >
-            {dict.hero.brandStripLabel}
-          </h2>
-          <BrandStrip brands={otherBrands} className="mt-6" />
+          <Reveal className="mt-10">
+            <PhotoGallery
+              images={brand.gallery}
+              dict={dict}
+              layout="mosaic"
+              ariaLabel={`${dict.brandPage.galleryTitle} — ${brand.name}`}
+            />
+          </Reveal>
         </Container>
       </Section>
     </>

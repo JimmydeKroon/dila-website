@@ -12,12 +12,15 @@
  *  - The eight shop photos were exported from Google Maps, so several of them
  *    still have Google's navigation arrows and watermark burned into the
  *    image. Those are cropped away here (`crop` below).
- *  - Brand card photos are generated placeholders until the client sends real
- *    product shots (see `brandSlugs` below).
- *  - The supplied logo is a square, white-on-black PNG. `dila-logo-light.png`
- *    rebuilds it as a transparent PNG by using each pixel's brightest channel
- *    as its alpha (the standard "remove black background" trick), which is what
- *    lets it sit on the dark footer. The client's own file is left untouched.
+ *  - Brand photos and the gallery pool are **Unsplash placeholders** (see
+ *    `brandPhotos` / `galleryPhotos` below) and must be replaced by the
+ *    client's own product shots. If a source file is missing, brand cards fall
+ *    back to a generated "FOTO VOLGT" tile so the grid never looks broken.
+ *  - The supplied logo (`assets/logo/dila.png`) already carries a transparent
+ *    background, so the only thing `dila-logo.png` needs is a trim of its empty
+ *    border and a resize. The same file is used on the light header and the
+ *    dark footer because the artwork reads on both. The client's own file is
+ *    left untouched.
  */
 import { mkdir, readdir, copyFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -78,15 +81,32 @@ const photos = {
 };
 
 /**
- * Brand card photos.
+ * Brand photos — used both on the home-page cards and as the brand-page hero.
  *
- * PLACEHOLDERS: the client has not supplied product shots per brand yet. These
- * are generated so the brand grid has its image slot filled and nothing looks
- * broken. Drop real photos at the same paths in `assets/brand-photos/<slug>.jpg`
- * and add them to `brandPhotos` below — the filenames the site uses do not
- * change.
+ * PLACEHOLDERS: these are Unsplash photos (Unsplash License: free for
+ * commercial use, no attribution required, modification allowed) chosen as
+ * stand-ins until the client supplies real product shots. They are deliberately
+ * **not** brand-authentic, so they must not survive the first content review.
+ *
+ * Replace `assets/brand-photos/<slug>.jpg` with the real photo — same filename,
+ * no code change. A missing source falls back to the generated placeholder.
  */
-const brandSlugs = ["vespa", "kymco", "derbi", "yamaha", "peugeot"];
+const brandPhotos = ["vespa", "kymco", "derbi", "yamaha", "peugeot"];
+
+/**
+ * Gallery pool for the brand-page mosaic. Same placeholder caveat as above.
+ * Replace `assets/gallery/gallery-NN.jpg` with the real photos.
+ */
+const galleryPhotos = [
+  "gallery-01",
+  "gallery-02",
+  "gallery-03",
+  "gallery-04",
+  "gallery-05",
+  "gallery-06",
+  "gallery-07",
+  "gallery-08",
+];
 
 /** Neutral "photo follows" placeholder, rasterised so Next can optimise it. */
 function placeholderSvg() {
@@ -111,7 +131,7 @@ const brandLogos = {
 };
 
 async function ensureDirs() {
-  for (const dir of ["shop", "workshop", "about", "hero", "brands"]) {
+  for (const dir of ["shop", "workshop", "about", "hero", "brands", "gallery"]) {
     await mkdir(path.join(publicDir, dir), { recursive: true });
   }
 }
@@ -175,59 +195,92 @@ async function buildBrandLogos() {
 }
 
 /**
- * Rebuild the client's logo as a transparent PNG by mapping each pixel's
- * brightest channel to its alpha. Black background → fully transparent,
- * white and red artwork → opaque. Only used on dark surfaces.
+ * The client's logo, web-ready.
+ *
+ * `dila.png` is a square PNG whose background is already transparent, so there
+ * is no chroma-keying to do — it only needs the empty border trimmed (the
+ * artwork sits inside ~4% padding) and a resize. Output is a square-ish PNG at
+ * 640px, enough for the 52px header lockup at 3x DPR and the 88px footer mark.
+ *
+ * Because the artwork is full colour — a white/black/red wordmark — the same
+ * file works over the hero photo, on the light header bar and on the dark
+ * footer. There is no separate light-on-dark variant any more.
  */
-async function buildTransparentLogo() {
+async function buildSiteLogo() {
   const input = path.join(sourceDir, "logo", "dila.png");
-  if (!existsSync(input)) return ["  ! skipped dila-logo-light.png — dila.png not found"];
+  if (!existsSync(input)) return ["  ! skipped logo/dila-logo.png — dila.png not found"];
 
-  const { data, info } = await sharp(input)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const out = Buffer.alloc(data.length);
-  for (let i = 0; i < data.length; i += info.channels) {
-    const r = data[i] ?? 0;
-    const g = data[i + 1] ?? 0;
-    const b = data[i + 2] ?? 0;
-    const brightest = Math.max(r, g, b);
-    // Ignore anything close to pure black, then ramp quickly to full opacity so
-    // antialiased edges stay soft instead of turning grey.
-    const alpha = brightest <= 12 ? 0 : Math.round(Math.min(255, (brightest - 12) * 1.08));
-    out[i] = r;
-    out[i + 1] = g;
-    out[i + 2] = b;
-    out[i + 3] = alpha;
-  }
-
-  const target = path.join(publicDir, "logo", "dila-logo-light.png");
+  const target = path.join(publicDir, "logo", "dila-logo.png");
   await mkdir(path.dirname(target), { recursive: true });
 
-  const result = await sharp(out, {
-    raw: { width: info.width, height: info.height, channels: 4 },
-  })
+  const result = await sharp(input)
+    // `trim` drops the fully transparent border, so the rendered logo fills the
+    // box its height is set to instead of floating inside invisible padding.
+    .trim({ threshold: 8 })
+    .resize({ width: 640, withoutEnlargement: true })
     .png({ compressionLevel: 9 })
     .toFile(target);
 
   return [
-    `  ✓ logo/dila-logo-light.png  ${result.width}x${result.height}  ${Math.round(result.size / 1024)} KB`,
+    `  ✓ logo/dila-logo.png  ${result.width}x${result.height}  ${Math.round(result.size / 1024)} KB`,
   ];
 }
 
-async function buildBrandPlaceholders() {
+/**
+ * Brand photos: 16:10, the ratio used by both the card image and the brand
+ * hero. Sourced from `assets/brand-photos/<slug>.jpg`, or generated when the
+ * client's real photo has not arrived yet.
+ */
+async function buildBrandPhotos() {
   const svg = placeholderSvg();
   const results = [];
 
-  for (const slug of brandSlugs) {
+  for (const slug of brandPhotos) {
     const target = path.join(publicDir, "brands", `${slug}-scooter.jpg`);
-    const info = await sharp(svg)
-      .jpeg({ quality: 82, mozjpeg: true, progressive: true })
+    const source = path.join(sourceDir, "brand-photos", `${slug}.jpg`);
+
+    if (!existsSync(source)) {
+      const info = await sharp(svg)
+        .jpeg({ quality: 82, mozjpeg: true, progressive: true })
+        .toFile(target);
+      results.push(
+        `  ! brands/${slug}-scooter.jpg  placeholder  ${info.width}x${info.height}  ${Math.round(info.size / 1024)} KB`,
+      );
+      continue;
+    }
+
+    const info = await sharp(source)
+      .resize({ width: 1800, height: 1125, fit: "cover", withoutEnlargement: true })
+      .jpeg({ quality: 78, mozjpeg: true, progressive: true })
       .toFile(target);
+
     results.push(
       `  ✓ brands/${slug}-scooter.jpg  ${info.width}x${info.height}  ${Math.round(info.size / 1024)} KB`,
+    );
+  }
+
+  return results;
+}
+
+/** Gallery pool for the brand-page mosaic: 4:3, cropped centrally. */
+async function buildGalleryPool() {
+  const results = [];
+  const sourceGallery = path.join(sourceDir, "gallery");
+
+  for (const name of galleryPhotos) {
+    const source = path.join(sourceGallery, `${name}.jpg`);
+    if (!existsSync(source)) {
+      results.push(`  ! skipped gallery/${name}.jpg — source not found`);
+      continue;
+    }
+
+    const info = await sharp(source)
+      .resize({ width: 1400, height: 1050, fit: "cover", withoutEnlargement: true })
+      .jpeg({ quality: 78, mozjpeg: true, progressive: true })
+      .toFile(path.join(publicDir, "gallery", `${name}.jpg`));
+
+    results.push(
+      `  ✓ gallery/${name}.jpg  ${info.width}x${info.height}  ${Math.round(info.size / 1024)} KB`,
     );
   }
 
@@ -239,12 +292,14 @@ async function main() {
 
   console.log("Photos");
   console.log((await buildPhotos()).join("\n"));
-  console.log("\nBrand card photos (placeholders)");
-  console.log((await buildBrandPlaceholders()).join("\n"));
+  console.log("\nBrand photos");
+  console.log((await buildBrandPhotos()).join("\n"));
+  console.log("\nGallery pool (brand pages)");
+  console.log((await buildGalleryPool()).join("\n"));
   console.log("\nBrand logos");
   console.log((await buildBrandLogos()).join("\n"));
   console.log("\nLogo artwork");
-  console.log((await buildTransparentLogo()).join("\n"));
+  console.log((await buildSiteLogo()).join("\n"));
 }
 
 main().catch((error) => {

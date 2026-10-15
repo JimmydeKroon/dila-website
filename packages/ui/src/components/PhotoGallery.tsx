@@ -10,7 +10,28 @@ interface PhotoGalleryProps {
   images: ImageRef[];
   dict: Dictionary;
   className?: string;
+  /**
+   * `grid` is an even four-up row; `mosaic` is an asymmetric bento block that
+   * leads with one large photo. Both open the same lightbox.
+   */
+  layout?: "grid" | "mosaic";
+  /** Accessible name for the thumbnails; defaults to the shop-gallery label. */
+  ariaLabel?: string;
 }
+
+/**
+ * Bento spans for the mosaic, in order. Six photos fill a four-column, three-row
+ * block exactly; anything beyond that falls back to a single cell so a longer
+ * set degrades gracefully instead of leaving holes.
+ */
+const mosaicSpans = [
+  "col-span-2 row-span-2",
+  "col-span-2",
+  "col-span-1",
+  "col-span-1",
+  "col-span-2",
+  "col-span-2",
+];
 
 /**
  * Store-and-workshop photos. Opens in a lightweight lightbox so visitors can
@@ -18,9 +39,16 @@ interface PhotoGalleryProps {
  * through the set, and the overlay is a native dialog-like element with a
  * focusable close button.
  */
-export function PhotoGallery({ images, dict, className }: PhotoGalleryProps) {
+export function PhotoGallery({
+  images,
+  dict,
+  className,
+  layout = "grid",
+  ariaLabel,
+}: PhotoGalleryProps) {
   const [index, setIndex] = useState<number | null>(null);
   const isOpen = index !== null;
+  const label = ariaLabel ?? dict.about.galleryTitle;
 
   const close = useCallback(() => setIndex(null), []);
   const step = useCallback(
@@ -60,28 +88,43 @@ export function PhotoGallery({ images, dict, className }: PhotoGalleryProps) {
     <>
       <ul
         className={cn(
-          "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4",
+          "grid gap-3 sm:gap-4",
+          layout === "mosaic"
+            ? "auto-rows-[9rem] grid-cols-2 sm:auto-rows-[11rem] lg:auto-rows-[12rem] lg:grid-cols-4"
+            : "grid-cols-2 lg:grid-cols-4",
           className,
         )}
       >
         {images.map((image, i) => (
           <li
             key={image.src}
-            className="relative overflow-hidden rounded-xl bg-surface-alt"
+            className={cn(
+              "relative overflow-hidden rounded-xl bg-surface-alt",
+              layout === "mosaic" && (mosaicSpans[i] ?? "col-span-1"),
+            )}
           >
             <button
               type="button"
               onClick={() => setIndex(i)}
               className="group block h-full w-full cursor-zoom-in"
-              aria-label={`${dict.about.galleryTitle}: ${image.alt}`}
+              aria-label={`${label}: ${image.alt}`}
             >
-              <span className="block aspect-4/3 w-full">
+              <span
+                className={cn(
+                  "block w-full",
+                  layout === "mosaic" ? "h-full" : "aspect-4/3",
+                )}
+              >
                 <Image
                   src={image.src}
                   alt={image.alt}
-                  width={1200}
-                  height={900}
-                  sizes="(min-width: 1024px) 33vw, 50vw"
+                  width={1400}
+                  height={1050}
+                  sizes={
+                    layout === "mosaic"
+                      ? "(min-width: 1024px) 45vw, 92vw"
+                      : "(min-width: 1024px) 33vw, 50vw"
+                  }
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                   style={image.focal ? { objectPosition: image.focal } : undefined}
                 />

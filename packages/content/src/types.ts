@@ -55,7 +55,11 @@ export interface SiteInfo {
   /** The umbrella name both shops share. */
   groupName: string;
   tagline: string;
-  /** Short descriptor shown beside the wordmark in the header. */
+  /**
+   * Short descriptor for the shop, e.g. "Scooters en brommers". The logo
+   * artwork already carries the trading name, so this is no longer printed
+   * beside it — it is the accessible name of the header logo link.
+   */
   logoStrapline: string;
   /** Meta description for the home page. */
   description: string;
@@ -95,6 +99,14 @@ export interface Brand {
   name: string;
   /** Scooter photo shown at the top of the brand card. */
   image: ImageRef;
+  /**
+   * Full-bleed photo behind the copy at the top of the brand page. Kept apart
+   * from `image` because the two are cropped differently: the card is a 16:10
+   * thumbnail, the hero is a wide banner, so each needs its own focal point.
+   */
+  hero: ImageRef;
+  /** Photos shown in the brand page mosaic. */
+  gallery: ImageRef[];
   /** Logo path inside `public/images/brands`. */
   logoSrc: string;
   /** Intrinsic logo width, used to keep the correct aspect ratio. */
@@ -118,6 +130,13 @@ export interface Brand {
   officialUrl: string;
   officialLabel: string;
 }
+
+/**
+ * Icons usable by the "about Dila" facts. A narrow union rather than the UI
+ * package's full icon set, because the content package must not depend on
+ * `@dila/ui` — the copy files only name the few icons they are allowed to use.
+ */
+export type FeatureIcon = "wrench" | "pin" | "check" | "shield";
 
 export type ServiceIcon =
   | "wrench"

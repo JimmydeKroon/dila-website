@@ -52,11 +52,12 @@ export const shopGallery: ImageRef[] = [
 ];
 
 /**
- * Footer logo: the client's own artwork, converted to a transparent PNG by the
- * image script so the white-on-black original works on the dark footer.
+ * The client's own logo, trimmed and resized by the image script. Freed from
+ * its former black background, the artwork reads on the light header as well as
+ * on the dark footer, so both use this one file.
  */
-export const footerLogo = {
-  src: "/images/logo/dila-logo-light.png",
-  width: 1254,
-  height: 1254,
+export const siteLogo = {
+  src: "/images/logo/dila-logo.png",
+  width: 640,
+  height: 638,
 };

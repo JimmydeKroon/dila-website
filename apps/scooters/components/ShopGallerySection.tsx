@@ -1,5 +1,11 @@
 import { getDictionary } from "@dila/content";
-import { Container, PhotoGallery, Section, SectionHeading } from "@dila/ui";
+import {
+  Container,
+  PhotoGallery,
+  Reveal,
+  Section,
+  SectionHeading,
+} from "@dila/ui";
 import { shopGallery } from "@/lib/content";
 
 export function ShopGallerySection() {
@@ -8,15 +14,21 @@ export function ShopGallerySection() {
   return (
     <Section id="winkel" tone="paper" aria-labelledby="gallery-title">
       <Container width="wide">
-        <SectionHeading
-          id="gallery-title"
-          eyebrow={dict.about.eyebrow}
-          title={dict.about.galleryTitle}
-          lead={dict.about.galleryLead}
-          align="center"
-          className="mx-auto"
-        />
-        <PhotoGallery images={shopGallery} dict={dict} className="mt-10" />
+        <Reveal className="mx-auto max-w-2xl">
+          <SectionHeading
+            id="gallery-title"
+            eyebrow={dict.about.eyebrow}
+            title={dict.about.galleryTitle}
+            lead={dict.about.galleryLead}
+            align="center"
+          />
+        </Reveal>
+
+        {/* The gallery is a client component with its own lightbox, so the whole
+            block animates as one rather than trying to stagger its tiles. */}
+        <Reveal className="mt-10">
+          <PhotoGallery images={shopGallery} dict={dict} />
+        </Reveal>
       </Container>
     </Section>
   );

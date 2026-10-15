@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { getDictionary, scooters, services } from "@dila/content";
+import { galleryPool, getDictionary, services } from "@dila/content";
 import {
   Container,
-  Icon,
+  Reveal,
   Section,
   SectionHeading,
   ServiceCard,
@@ -10,10 +10,37 @@ import {
 import { workshopImage } from "@/lib/content";
 
 /**
- * Two clear rows rather than one mixed column stack:
- *   1. photo on the left, heading / APK note / CTA on the right, vertically
- *      centred so nothing floats out of alignment;
- *   2. the services as a full-width three-column grid (6 cards = 2 even rows).
+ * Four photos of the workshop.
+ *
+ * The first is the client's own, the only real workbench photo we have. The
+ * other three are the same placeholder files the brand pages use — chosen for
+ * the ones that show work being done rather than a parked scooter — so replacing
+ * them (`assets/gallery/`, then `pnpm images`) improves every page at once.
+ */
+const workshopPhotos = [
+  workshopImage,
+  galleryPool[0]!,
+  galleryPool[1]!,
+  galleryPool[2]!,
+];
+
+/**
+ * The workshop.
+ *
+ * Two columns: what the workshop looks like on one side, what we actually do on
+ * the other, as a card per service. Three of the four photos are placeholders
+ * (see `galleryPool`), so their alt text describes what is in the frame today.
+ *
+ * There is no call to action and no phone number here any more. The section used
+ * to carry a button — briefly two, a button and a "liever bellen?" line, both
+ * dialling the same number — which turned the workshop block into a sales pitch.
+ * The number now appears exactly once on the site, in the footer.
+ *
+ * The APK note went with it. As a full-width band under the two columns it read
+ * as one more thing the visitor had to scroll past; the claim it makes (no APK
+ * obligation for brommers, snorfietsen and motoren) is a factual detail, not the
+ * point of the section. `dict.maintenance.note` is still in the dictionary if it
+ * is ever wanted back somewhere smaller.
  */
 export function MaintenanceSection() {
   const dict = getDictionary("nl");
@@ -21,55 +48,54 @@ export function MaintenanceSection() {
   return (
     <Section id="onderhoud" tone="surface" aria-labelledby="maintenance-title">
       <Container width="wide">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-          <figure className="overflow-hidden rounded-2xl bg-surface-alt">
-            <span className="block aspect-4/3 w-full">
-              <Image
-                src={workshopImage.src}
-                alt={workshopImage.alt}
-                width={1600}
-                height={1200}
-                sizes="(min-width: 1024px) 48vw, 100vw"
-                className="h-full w-full object-cover"
-              />
-            </span>
-            <figcaption className="bg-paper px-5 py-3 text-xs text-ink-500">
-              {dict.maintenance.imageCaption}
-            </figcaption>
-          </figure>
+        <Reveal className="mx-auto max-w-2xl">
+          <SectionHeading
+            id="maintenance-title"
+            eyebrow={dict.maintenance.eyebrow}
+            title={dict.maintenance.title}
+            lead={dict.maintenance.lead}
+            align="center"
+          />
+        </Reveal>
 
-          <div>
-            <SectionHeading
-              id="maintenance-title"
-              eyebrow={dict.maintenance.eyebrow}
-              title={dict.maintenance.title}
-              lead={dict.maintenance.lead}
-            />
-
-            <p className="mt-7 flex gap-3 rounded-2xl border border-line bg-paper p-5 text-sm leading-relaxed text-ink-600">
-              <Icon
-                name="shield"
-                size={18}
-                className="mt-0.5 shrink-0 text-accent-strong"
-              />
-              {dict.maintenance.note}
-            </p>
-
-            <a
-              href={scooters.phoneHref}
-              className="mt-7 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-base font-semibold text-accent-ink transition-colors hover:bg-accent-strong"
+        <div className="mt-14 grid gap-8 lg:grid-cols-2 lg:gap-12">
+          {/* Photos. A plain 2×2 block rather than the lightbox gallery: these
+              are context for the copy beside them, not a set to browse. */}
+          <Reveal>
+            <ul
+              className="grid grid-cols-2 gap-3 sm:gap-4"
+              aria-label={dict.maintenance.imageCaption}
             >
-              <Icon name="phone" size={18} />
-              {dict.maintenance.cta}
-            </a>
-          </div>
-        </div>
+              {workshopPhotos.map((photo) => (
+                <li
+                  key={photo.src}
+                  className="relative overflow-hidden rounded-2xl bg-surface-alt"
+                >
+                  <span className="block aspect-4/3 w-full">
+                    <Image
+                      src={photo.src}
+                      alt={photo.alt}
+                      width={1400}
+                      height={1050}
+                      sizes="(min-width: 1024px) 24vw, 45vw"
+                      className="h-full w-full object-cover"
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-sm text-ink-500">
+              {dict.maintenance.imageCaption}
+            </p>
+          </Reveal>
 
-        <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service) => (
-            <ServiceCard key={service.slug} service={service} />
-          ))}
-        </ul>
+          {/* What we do, one card per service. */}
+          <Reveal as="ul" stagger className="grid gap-4 sm:grid-cols-2">
+            {services.map((service) => (
+              <ServiceCard key={service.slug} service={service} />
+            ))}
+          </Reveal>
+        </div>
       </Container>
     </Section>
   );

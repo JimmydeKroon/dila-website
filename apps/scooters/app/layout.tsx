@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, Inter } from "next/font/google";
 import { brands, getDictionary, scooters } from "@dila/content";
 import { SiteFooter, SiteHeader } from "@dila/ui";
-import { footerLogo, navItems } from "@/lib/content";
+import { navItems, siteLogo } from "@/lib/content";
 import { localBusinessJsonLd } from "@/lib/structured-data";
 import "./globals.css";
 
@@ -79,6 +79,12 @@ export default function RootLayout({
     <html
       lang={dict.htmlLang}
       data-shop={scooters.theme}
+      // Next 16 has to know that `html` scrolls smoothly (theme.css) so it can
+      // switch it off for the duration of a route transition. Without this the
+      // router's own scroll handling animates while the new page is still
+      // laying out, and a client-side navigation to a long page lands partway
+      // down it instead of at the top.
+      data-scroll-behavior="smooth"
       className={`${archivo.variable} ${inter.variable}`}
     >
       <body className="flex min-h-screen flex-col">
@@ -89,19 +95,31 @@ export default function RootLayout({
           {dict.nav.skipToContent}
         </a>
 
-        <SiteHeader site={scooters} dict={dict} navItems={navItems} />
+        <SiteHeader
+          site={scooters}
+          dict={dict}
+          navItems={navItems}
+          logoSrc={siteLogo.src}
+          logoWidth={siteLogo.width}
+          logoHeight={siteLogo.height}
+        />
 
-        <main id="inhoud" className="flex-1">
+        {/*
+          One header height of clearance, because the header is fixed and no
+          longer takes up space in the flow. A page whose first block is a hero
+          cancels it again with `-mt-20` so the photo can run under the menu bar;
+          pages without one (the 404) simply start below the bar.
+        */}
+        <main id="inhoud" className="flex-1 pt-20">
           {children}
         </main>
 
         <SiteFooter
           site={scooters}
           dict={dict}
-          navItems={navItems}
-          logoSrc={footerLogo.src}
-          logoWidth={footerLogo.width}
-          logoHeight={footerLogo.height}
+          logoSrc={siteLogo.src}
+          logoWidth={siteLogo.width}
+          logoHeight={siteLogo.height}
         />
 
         <script
